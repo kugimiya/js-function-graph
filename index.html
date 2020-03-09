@@ -1,0 +1,141 @@
+<html>
+
+<head>
+  <style type="text/css">
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body style=" display: flex ">
+<div id="container">
+  <canvas id="func_drawer" width="800" height="800"></canvas>
+</div>
+
+<form onsubmit="handleSubmit(this);return false;">
+  <label>
+    <p>accuracy, def: 100 (100000 is very big)</p>
+    <input type="number" name="accuracy" value="100" placeholder="accuracy, def: 100"/>
+  </label>
+  <label>
+    <p>from (minimal x), def: -10</p>
+    <input type="number" name="from" value="-10" placeholder="from, def: -10"/>
+  </label>
+  <label>
+    <p>to (maximal x), def: 10</p>
+    <input type="number" name="to" value="10" placeholder="to, def: 10"/>
+  </label>
+  <hr/>
+  <label>
+    <p>scaleX, def: 36</p>
+    <input type="number" name="scaleX" value="36" placeholder="scaleX, def: 36"/>
+  </label>
+  <label>
+    <p>scaleY, def: 360</p>
+    <input type="number" name="scaleY" value="360" placeholder="scaleY, def: 360"/>
+  </label>
+  <label>
+    <p>centerX, def: 400</p>
+    <input type="number" name="centerX" value="400" placeholder="centerX, def: 400"/>
+  </label>
+  <label>
+    <p>centerY, def: 400</p>
+    <input type="number" name="centerY" value="400" placeholder="centerY, def: 400"/>
+  </label>
+  <hr/>
+  <label>
+    <p>js function, def: 'x => Math.cos(x)'</p>
+    <input type="text" name="functiond" value="x => Math.cos(x)" placeholder="function, def: 'x => Math.cos(x)'"/>
+  </label>
+
+  <input type="submit" value="Draw!"/>
+  <button onclick="clearbg(this)" type="button">Clear!</button>
+</form>
+</body>
+
+<script>
+  const sleep = timeout => new Promise(res => setTimeout(res, timeout));
+  /** @type {HTMLCanvasElement} */
+  var canvas = document.getElementById('func_drawer');
+  /** @type {CanvasRenderingContext2D} */
+  var context = canvas.getContext('2d');
+
+  function clearbg () {
+    document.getElementById('container').innerHTML = '';
+    document.getElementById('container').innerHTML = '<canvas id="func_drawer" width="800" height="800"></canvas>';
+
+    canvas = document.getElementById('func_drawer');
+    context = canvas.getContext('2d');
+  }
+
+  function handleSubmit (ev) {
+    const {
+      accuracy,
+      from,
+      to,
+      scaleX,
+      scaleY,
+      centerX,
+      centerY,
+      functiond
+    } = ev;
+
+    const config = ({
+      accuracy: +accuracy.value,
+      from: +from.value,
+      to: +to.value,
+      scaleX: +scaleX.value,
+      scaleY: +scaleY.value,
+      centerX: +centerX.value,
+      centerY: +centerY.value,
+      functiond: eval(functiond.value)
+    });
+
+    main(config);
+
+    return false;
+  }
+
+  /**
+   * @param {CanvasRenderingContext2D} con
+   */
+  async function main ({
+                         accuracy = 100,
+                         from = -10,
+                         to = 10,
+                         scaleX = 1,
+                         scaleY = 1,
+                         centerX = 400,
+                         centerY = 400,
+                         functiond
+                       }) {
+    const center = { x: centerX, y: centerY },
+      length = Math.abs(from) + Math.abs(to),
+      stepLength = length / accuracy;
+
+    const getCoordinates = n => ({
+      x: center.x + scaleX * (from + stepLength * n),
+      y: center.y + scaleY * (functiond(from + (stepLength * n)))
+    });
+
+    context.strokeStyle = 'black';
+    for (let i = 0; i < accuracy + 1; i++) {
+      const { x, y } = getCoordinates(i);
+
+      if (i === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+
+      if (i % 10 === 0) {
+        console.log(`${ i / (accuracy / 100) }%`);
+        context.stroke();
+        await sleep(1);
+      }
+    }
+  }
+
+</script>
+</html>
